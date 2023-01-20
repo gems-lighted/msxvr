@@ -1,0 +1,13 @@
+class CScreenBox {
+	function _operator_new(_app){
+		app = _app;
+		con = app.GetDOS().GetConsole();	
+		bufScreen = Dictionary_New();
+		initSpecialCharacters();
+		initScreen();		
+	}
+		
+	function _operator_delete(){
+	
+	}
+}

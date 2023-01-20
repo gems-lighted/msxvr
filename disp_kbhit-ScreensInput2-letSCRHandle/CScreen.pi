@@ -1,0 +1,205 @@
+class CScreen{
+
+	properties:
+		app = null;
+		con = null;
+		screen = null; // array with current screen dimensions
+		sizeX  = int;
+		sizeY  = int;	
+		
+		CHAR_CORNER_NW = null;
+		CHAR_CORNER_NE = null;
+		CHAR_CORNER_SE = null;
+		CHAR_CORNER_SW = null;
+		CHAR_HL        = null; // horizontal line
+		CHAR_VL	       = null; // vertical line	
+		CHAR_BLOCK     = null; // block for filling an empty character
+			
+		bufScreen  	   = null; // list with dictionary
+		datScreen      = null; // dictionary (CScreenData) containing data of elements
+		
+		curWidget	   = null; // remembers current hightlighted dialog element	
+	
+
+	function _operator_new(_app){
+		app = _app;
+		con = app.GetDOS().GetConsole();
+		datScreen = Dictionary_New();
+		bufScreen = Dictionary_New();
+		datScreen = Dictionary_New();
+		initSpecialCharacters();
+		initScreen();		
+	}
+		
+	function _operator_delete(){
+	
+	}
+	
+	function getData(_identifier, _typeData){
+		if (Dictionary_IsKey(datScreen, _identifier) != null){
+			_hlp = Dictionary_Get(datScreen, _identifier);
+			switch (_typeData) {
+				case "dataVALUE" : return _hlp._get("dataVALUE");
+				break;
+				case "dataPOS"   : return _hlp._get("dataPOS");
+				break;
+				case "dataSIZE"  : return _hlp._get("dataSIZE");
+				break;
+				default:           return false;
+				break;			
+			}			
+		}else{
+			return false;
+		}
+	}
+	
+	function setData(_identifier, _typeData, _value){
+		_success = true;
+		if (Dictionary_IsKey(datScreen, _identifier) != null){
+			_index = Dictionary_GetItemIndex(datScreen, _identifier);
+			_item  = Dictionary_Get(datScreen, _identifier);
+			switch (_typeData) {
+				case "dataVALUE" : _item._set("dataVALUE", _value);
+				break;
+				case "dataPOS"   : _item._set("dataPOS", _value);
+				break;
+				case "dataSIZE"  : _item._set("dataSIZE", _value);
+				default:           _success = false;
+			}
+			if (_success){
+				Dictionary_Set(datScreen, _index, _item);				
+			}
+		}else{
+			_success = false;
+		}
+		return _success;
+	}
+	
+	private function initSpecialCharacters(){
+		CHAR_CORNER_NW = ascii(1)+ascii(88);
+		CHAR_CORNER_NE = ascii(1)+ascii(89);
+		CHAR_CORNER_SE = ascii(1)+ascii(91);
+		CHAR_CORNER_SW = ascii(1)+ascii(90);
+		CHAR_HL        = ascii(1)+ascii(87);
+		CHAR_VL        = ascii(1)+ascii(86);
+		CHAR_BLOCK     = ascii(219);
+	}
+	
+	private function initScreen(){
+		con.cls();
+		sizeX = con.GetTextModeCols();
+		sizeY = con.GetTextModeRows();
+	
+	}
+
+	/*   for position based screen buffer    :   */
+	function calcXYString(_valX, _valY){
+		pos = _valY * sizeX + _valX;
+		return pos;
+		// return pos as string, for map	
+	}
+
+	function PutLabel(_colorname, _offsetX, _offsetY, strLabel){
+		_posStr = calcXYString(_offsetX, _offsetY); 
+		Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]"+strLabel+"[/def]");		
+				
+	}
+	function PutInputField(_identifier, _offsetX, _offsetY, _length, _tabno){
+		_posStr = calcXYString(_offsetX, _offsetY);
+		_strBlanks = "";
+		for (i=0;i<_length; i++) { _strBlanks += CHAR_BLOCK; }
+		Dictionary_InsertItem(bufScreen, _posStr,  "[/green]"+_strBlanks+"[/def]");	
+		/*  add field to data object */
+		if (Dictionary_IsKey(datScreen, _identifier) == null){
+			_hlp = new CScreenData();
+			_hlp._set("dataVALUE","inittest1");
+			_hlp._set("dataPOS",_posStr);
+			_hlp._set("dataTABorder", _tabno);
+			_hlp._set("dataSIZE",_length);			
+			Dictionary_InsertItem(datScreen, _identifier, _hlp);
+		}
+	}
+
+	function PutBox(_colorname, _offsetX, _offsetY, _sizeX, _sizeY, _caption=null){
+		_posStr = calcXYString(_offsetX, _offsetY); 
+		Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]"+CHAR_CORNER_NW);	
+		/* draw from offsetX/Y to EAST */
+		for (xi=1; xi<_sizeX; xi++){
+			if (xi == 2){
+				if (_caption != null){									
+					_posStr = calcXYString(_offsetX+xi, _offsetY); // calc list position		
+					Dictionary_InsertItem(bufScreen, _posStr, "[/"+_colorname+"]"+" " +_caption);		
+					xi = xi + sizeof(_caption)+1;
+				}else{
+				_posStr = calcXYString(_offsetX+xi, _offsetY); // calc list position						
+				Dictionary_InsertItem(bufScreen, _posStr, "[/"+_colorname+"]"+CHAR_HL);
+				}
+			}else{
+				_posStr = calcXYString(_offsetX+xi, _offsetY); // calc list position						
+				Dictionary_InsertItem(bufScreen, _posStr, "[/"+_colorname+"]"+CHAR_HL);		
+			}
+
+			
+		}
+		_posStr++;
+		Dictionary_InsertItem(bufScreen, _posStr, "[/"+_colorname+"]"+ CHAR_CORNER_NE);
+		/* draw from N to S*/
+		for (r=1; r<_sizeY; r++){		
+			_posStr = calcXYString(_offsetX, _offsetY+r);			
+			Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]"+CHAR_VL);		
+		}
+		for (r=1; r<_sizeY; r++){		
+			_posStr = calcXYString(_offsetX+_sizeX, _offsetY+r);
+			//con.PrintLn("_posStr: "+_posStr); // posStr growth downwards (+80) - ok.
+			Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]"+CHAR_VL);			
+		}
+		/*  draw from SW to SE */
+		_posStr = calcXYString(_offsetX, _offsetY+_sizeY);
+		Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]"+CHAR_CORNER_SW);
+	
+		for (xi=1; xi<_sizeX; xi++){
+			_posStr = calcXYString(_offsetX+xi, _offsetY+_sizeY);		
+			Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]"+CHAR_HL);
+		}
+		_posStr++;
+		Dictionary_InsertItem(bufScreen, _posStr,  "[/"+_colorname+"]" + CHAR_CORNER_SE+"[/def]");
+	}
+	
+	function dumpScreen2(){
+		_amntItems2 = Dictionary_GetItemCount(bufScreen);	
+		for (i=0; i<_amntItems2; i++){			
+			_item = Dictionary_Get(bufScreen, i);
+			if (_item != null){
+				_pos = Dictionary_GetItemKey(bufScreen, i);
+				_pos = int(_pos);	// convert string to int, so DIV is used
+				_y = _pos / sizeX;
+				_x = _pos - (_y * sizeX);		
+				con.Locate(_x, _y);
+				con.Print(_item);
+			}else{
+				con.Print(i+" not there.");
+			}
+			
+		}
+	}
+	
+	/* event handler signal sink of external source */
+	function handleKeyPress(_pressedKey){
+		switch (_pressedKey){
+			case 15 : {   // TAB Key
+				con.Locate(30,11);
+				con.Print("external received: (TAB key) " + _pressedKey);
+				}				
+			break;
+			default:
+				con.Locate(30,11);
+				con.Print("not handled key : " + _pressedKey +  "               ");
+			break;
+		
+		
+		}
+	
+	}
+
+	
+}

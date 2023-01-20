@@ -1,0 +1,49 @@
+class App implements DOS_Program{
+	properties:
+		app   = null;
+		con   = null;
+		tools = null;	
+		
+	defines:
+        BLINK_SPEED = 500;
+	
+	
+	virtual Start(){
+		app = this;
+		con = GetDOS().GetConsole();
+		tools = new CTools(this);	
+		Go();	
+	}
+	
+	function Go(){
+        con.SetColor(15, 1, 1);
+		con.cls();		
+		/* Prepare two screens */
+		_scr1 = new CScreen(this);	
+		_scr1.PutBox("blue",0,0,78, 5, "Blue");
+		_scr1.PutBox("red",0,6,19, 17, "Red");
+		_scr1.PutBox("yellow",20,6,58, 17, "Yellow");	
+		_scr1.PutLabel("green", 24, 12, "this is a string");					
+		_scr2 = new CScreen(this);	
+		_scr2.PutBox("yellow",0,0,78, 5, "some blinking stuff on VRScript");
+		_scr2.PutBox("blue",0,6,19, 17);
+		_scr2.PutBox("red",20,6,58, 17, "mit Text");
+		_scr2.PutLabel("white", 21, 8, "A white text");
+	    /* add two screens to screenBuffers */
+		_scrBuffers = [];
+		_scrBuffers += [_scr1];		
+		_scrBuffers += [_scr2];	
+		
+		/* output all screenbuffer one after the other */
+		_amntScreenBuffers = sizeof(_scrBuffers);			
+		for (y=0; y<=20; y++){		
+			for (i=0; i<_amntScreenBuffers; i++){							
+				tools.sleep(BLINK_SPEED);	
+				con.cls();
+				_curBuf = _scrBuffers[i];
+				_curBuf.dumpScreen2();							
+			}
+		}		
+	//End(0);  ctrl+c
+	}
+}

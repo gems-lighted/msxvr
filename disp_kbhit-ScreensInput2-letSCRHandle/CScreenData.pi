@@ -1,0 +1,11 @@
+class CScreenData{
+
+	properties:
+		dataVALUE    = null;  // value of widget
+		dataPOS      = null;  //  xy position of widget
+	    dataTABorder = null;  // TAB-key order value
+
+	function _operator_new(){
+	}
+
+}

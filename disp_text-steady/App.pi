@@ -1,0 +1,21 @@
+class App implements DOS_Program{
+	properties:
+		con = null;
+		scr = null;
+	virtual Start(){
+		con = GetDOS().GetConsole();
+		scr = new CScreen(this);
+		Go();	
+	}
+	
+	function Go(){
+		con.SetColor(15, 5, 5);
+	    con.cls();
+		scr.PutBox("black",0,0,78, 5, "Heading");      // list approach (dictionary)
+		scr.PutBox("yellow",0,6,19, 17, "Side");  // list approach (dictionary)
+		scr.PutBox("lightgreen",20,6,58, 17, "Main");  // list approach (dictionary)
+		scr.dumpScreen2();		// 2 means buffer2 sourced by dictionary
+	
+	//End(0);  ctrl+c
+	}
+}

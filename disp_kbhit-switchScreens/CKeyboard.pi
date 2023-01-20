@@ -1,0 +1,258 @@
+class CKeyboard{
+	properties:
+		app = null;
+		con = null;
+		kb_allKeyConstants = null;   // all KEY Constants in an array
+		kb_hitWaitElapsed  = false;  // set when timer fires; scan-abort
+		kb_lastKeyPressed  = null;   // stores last scan result on key press	
+		timer = null;	
+		
+	function _operator_new(_app){
+		app = _app;	
+		con = app.GetDOS().GetConsole();
+		kb_allKeyConstants = kb_getAllKeyConstants(); 		
+	}
+	function _operator_delete(){
+		delete timer;	// delete CTimer instance
+	}	
+	function getGreeting(){
+		return "ok...keyb is here...";
+	}
+	/*
+	* kbhit: 
+	* _wait = in ms, before function returns false, if no key was pressed in time x
+	*         otherwise it returns key_code immediately on key press
+	*/
+	function kbhit( _wait=null ){	
+			
+		if (_wait === null){
+			/* scan as long no key press detected*/
+			while(kbScan() == false){
+				con.Print("waiting...\n"); // no keypress detected
+				 //  why ? without, it gets non-responsive
+			}
+			_res = kb_lastKeyPressed;	// save key before clearing KEY code
+			kb_lastKeyPressed = null;   //clearing received KEY code		
+			return _res;  // res is keyboard constant			
+		}else{			
+			/* scan and give up after _wait * ms */			
+			Timer_New("tim1", this, "onTim1Elapsed", _wait);
+			kb_hitWaitElapsed=false;
+			kb_lastKeyPressed=null;
+			tim = Timer_Get("tim1");
+		    Timer_Start(tim);
+		   
+				_keypressed = false;
+				while(true){			
+					scanresult = kbScan();
+					if (scanresult == true){
+						_keypressed = true;				
+						break;
+					}
+					if (kb_hitWaitElapsed == true){
+						break;
+					}
+					else{
+					//con.PrintLn("I am here1"); 				
+					break;   //  why ? without, it gets non-responsive
+				
+					}
+				}
+		
+					
+			// prepare return value; null if nothing pressed or timeout, or keynumber
+			if (kb_lastKeyPressed != null){
+				_res = kb_lastKeyPressed;  // save key before clearing KEY code
+				kb_lastKeyPressed = null;  //clearing received KEY code		
+			}else{
+				_res = false;
+			}
+			Timer_Delete(tim);
+			return _res;  // res is keyboard constant								
+		}	
+	}
+	
+	function onTim1Elapsed(_data){
+	con.PrintLn("Timer elapsed");
+		kb_hitWaitElapsed = true;
+		return;		
+	}	
+	
+	function kbScan(){
+		_currentKey = null;
+		_res = false;
+		//con.PrintLn("new scan");
+		for (i=0; i< 155; i++){ // scan for ALL key constants		
+			_current_Key = kb_allKeyConstants[i];
+			//con.PrintLn("scanning for key: " + _current_Key);
+			if (Input_IsKeyPressed(kb_allKeyConstants[i]) == true){
+				//con.Print("Key: "+_current_Key+"    \r");
+				kb_lastKeyPressed = kb_allKeyConstants[i];
+				break;  // break;  does not work; so setting to max
+				_res = _current_Key;; // a pressed key was detected 			
+			}
+		}	
+		return _res;  // no pressed key was detected in this scan 
+	}	
+	
+	function kb_getAllKeyConstants(){
+		arrKeyConsts = [];	
+		arrKeyConsts += [KEY_BACK];
+		arrKeyConsts += [KEY_ESCAPE];
+		arrKeyConsts += [KEY_1];
+		arrKeyConsts += [KEY_2];
+		arrKeyConsts += [KEY_3];
+		arrKeyConsts += [KEY_4];
+		arrKeyConsts += [KEY_5];
+		arrKeyConsts += [KEY_6];
+		arrKeyConsts += [KEY_7];
+		arrKeyConsts += [KEY_8];
+		arrKeyConsts += [KEY_9];
+		arrKeyConsts += [KEY_0];
+		arrKeyConsts += [KEY_MINUS];
+		arrKeyConsts += [KEY_EQUALS];
+		arrKeyConsts += [KEY_BACKSPACE];
+		arrKeyConsts += [KEY_TAB];
+		arrKeyConsts += [KEY_Q];
+		arrKeyConsts += [KEY_W];
+		arrKeyConsts += [KEY_E];
+		arrKeyConsts += [KEY_R];
+		arrKeyConsts += [KEY_T];
+		arrKeyConsts += [KEY_Y];
+		arrKeyConsts += [KEY_U];
+		arrKeyConsts += [KEY_I];
+		arrKeyConsts += [KEY_O];
+		arrKeyConsts += [KEY_P];
+		arrKeyConsts += [KEY_LBRACKET];
+		arrKeyConsts += [KEY_RBRACKET];
+		arrKeyConsts += [KEY_RETURN];
+		arrKeyConsts += [KEY_ENTER];
+		arrKeyConsts += [KEY_LCONTROL];
+		arrKeyConsts += [KEY_A];
+		arrKeyConsts += [KEY_S];
+		arrKeyConsts += [KEY_D];
+		arrKeyConsts += [KEY_F];
+		arrKeyConsts += [KEY_G];
+		arrKeyConsts += [KEY_H];
+		arrKeyConsts += [KEY_J];
+		arrKeyConsts += [KEY_K];
+		arrKeyConsts += [KEY_L];
+		arrKeyConsts += [KEY_SEMICOLON];				
+		arrKeyConsts += [KEY_APOSTROPHE];	
+		arrKeyConsts += [KEY_GRAVE];
+		arrKeyConsts += [KEY_LSHIFT];
+		arrKeyConsts += [KEY_BACKSLASH];
+		arrKeyConsts += [KEY_Z];
+		arrKeyConsts += [KEY_X];										
+		arrKeyConsts += [KEY_C];
+		arrKeyConsts += [KEY_V];
+		arrKeyConsts += [KEY_B];
+		arrKeyConsts += [KEY_N];
+		arrKeyConsts += [KEY_M];
+		arrKeyConsts += [KEY_COMMA];
+		arrKeyConsts += [KEY_PERIOD];
+		arrKeyConsts += [KEY_SLASH];
+		arrKeyConsts += [KEY_RSHIFT];
+		arrKeyConsts += [KEY_MULTIPLY];
+		arrKeyConsts += [KEY_LMENU];
+		arrKeyConsts += [KEY_SPACE];
+		arrKeyConsts += [KEY_CAPITAL];
+		arrKeyConsts += [KEY_F1];
+		arrKeyConsts += [KEY_F2];
+		arrKeyConsts += [KEY_F3];
+		arrKeyConsts += [KEY_F4];
+		arrKeyConsts += [KEY_F5];	
+		arrKeyConsts += [KEY_F6];	
+		arrKeyConsts += [KEY_F7];	
+		arrKeyConsts += [KEY_F8];	
+		arrKeyConsts += [KEY_F9];	
+		arrKeyConsts += [KEY_F10];	
+		arrKeyConsts += [KEY_NUMLOCK];	
+		arrKeyConsts += [KEY_SCROLL];	
+		arrKeyConsts += [KEY_NUMPAD7];
+		arrKeyConsts += [KEY_NUMPAD8];	
+		arrKeyConsts += [KEY_NUMPAD9];	
+		arrKeyConsts += [KEY_SUBTRACT];	
+		arrKeyConsts += [KEY_NUMPAD4];	
+		arrKeyConsts += [KEY_NUMPAD5];	
+		arrKeyConsts += [KEY_NUMPAD6];	
+		arrKeyConsts += [KEY_ADD];	
+		arrKeyConsts += [KEY_NUMPAD1];
+		arrKeyConsts += [KEY_NUMPAD2];
+		arrKeyConsts += [KEY_NUMPAD3];
+		arrKeyConsts += [KEY_NUMPAD0];
+		arrKeyConsts += [KEY_DECIMAL];
+		arrKeyConsts += [KEY_OEM_102];
+		arrKeyConsts += [KEY_F11];
+		arrKeyConsts += [KEY_F12];
+		arrKeyConsts += [KEY_F13];
+		arrKeyConsts += [KEY_F14];
+		arrKeyConsts += [KEY_F15];
+		arrKeyConsts += [KEY_KANA];
+		arrKeyConsts += [KEY_ABNT_C1];
+		arrKeyConsts += [KEY_CONVERT];
+		arrKeyConsts += [KEY_NOCONVERT];
+		arrKeyConsts += [KEY_YEN];
+    	arrKeyConsts += [KEY_ABNT_C2];
+		arrKeyConsts += [KEY_NUMPADEQUALS];
+		arrKeyConsts += [KEY_PREVTRACK];
+		arrKeyConsts += [KEY_AT];
+		arrKeyConsts += [KEY_COLON];
+		arrKeyConsts += [KEY_UNDERLINE];
+		arrKeyConsts += [KEY_KANJI];
+		arrKeyConsts += [KEY_STOP];
+		arrKeyConsts += [KEY_AX];
+		arrKeyConsts += [KEY_UNLABELED];
+		arrKeyConsts += [KEY_NEXTTRACK];
+		arrKeyConsts += [KEY_NUMPADENTER];
+		arrKeyConsts += [KEY_RCONTROL];
+		arrKeyConsts += [KEY_MUTE];
+		arrKeyConsts += [KEY_CALCULATOR];
+		arrKeyConsts += [KEY_PLAYPAUSE];
+		arrKeyConsts += [KEY_MEDIASTOP];
+		arrKeyConsts += [KEY_VOLUMEDOWN];
+		arrKeyConsts += [KEY_VOLUMEUP];
+		arrKeyConsts += [KEY_WEBHOME];
+		arrKeyConsts += [KEY_NUMPADCOMMA];
+		arrKeyConsts += [KEY_DIVIDE];
+		arrKeyConsts += [KEY_PAUSE];
+		arrKeyConsts += [KEY_HOME];
+		arrKeyConsts += [KEY_UP];
+		arrKeyConsts += [KEY_PRIOR];
+		arrKeyConsts += [KEY_LEFT];
+		arrKeyConsts += [KEY_RIGHT];
+		arrKeyConsts += [KEY_END];
+		arrKeyConsts += [KEY_DOWN];
+		arrKeyConsts += [KEY_NEXT];
+		arrKeyConsts += [KEY_INSERT];
+		arrKeyConsts += [KEY_DELETE];
+		arrKeyConsts += [KEY_LWIN];
+		arrKeyConsts += [KEY_RWIN];
+		arrKeyConsts += [KEY_APPS];
+		arrKeyConsts += [KEY_RMENU];
+		arrKeyConsts += [KEY_POWER];
+		arrKeyConsts += [KEY_SLEEP];
+		arrKeyConsts += [KEY_WAKE];
+		arrKeyConsts += [KEY_PRINT];
+		arrKeyConsts += [KEY_SYSRQ];
+		arrKeyConsts += [KEY_WEBSEARCH];
+		arrKeyConsts += [KEY_WEBFAVORITES];
+		arrKeyConsts += [KEY_WEBREFRESH];
+		arrKeyConsts += [KEY_WEBSTOP];
+		arrKeyConsts += [KEY_WEBFORWARD];
+		arrKeyConsts += [KEY_WEBBACK];
+		arrKeyConsts += [KEY_MYCOMPUTER];
+		arrKeyConsts += [KEY_MAIL];
+		arrKeyConsts += [KEY_MEDIASELECT];
+		arrKeyConsts += [KEY_LALT];
+		arrKeyConsts += [KEY_RALT];
+		arrKeyConsts += [KEY_CAPSLOCK];
+		arrKeyConsts += [KEY_NUMPADSTAR];
+		arrKeyConsts += [KEY_NUMPADMINUS];
+		arrKeyConsts += [KEY_NUMPADPLUS];
+		arrKeyConsts += [KEY_NUMPADPERIOD];
+		arrKeyConsts += [KEY_NUMPADSLASH];
+		return arrKeyConsts;																														
+	}
+		
+}

@@ -1,0 +1,100 @@
+class App implements DOS_Program{
+	properties:
+		app      = null;
+		con      = null;	
+		keyb     = null;		
+		
+		
+	
+	virtual Start(){
+		app      = this;
+		con      = GetDOS().GetConsole();	
+		keyb     = new CKeyboard(this);		
+		
+		Go();	
+	}
+	
+	function Go(){
+        con.SetColor(15, 1, 1);
+		con.cls();	
+		
+		/* Prepare two screens */
+		_scr1 = new CScreen(this);		
+		_scr1.PutBox("blue",0,0,19, 5, "Blue");
+		_scr1.PutBox("red",0,6,19, 7, "Red");
+		_scr1.PutBox("yellow",20,0,58, 17, "Personal Data");					
+		_scr1.PutLabel("green", 0, 20,
+		               "ESC-quit   |  [/white] F1-Personal [/def]"+
+                                "  |  [/green] F2-Screen2 [/def]");
+		_scr1.PutLabel("white", 24,3, "Name:");
+		_scr1.PutInputField("txtName", 30, 3, 10, 1);
+		_scr1.PutLabel("white", 24,4, "Age :");
+		_scr1.PutInputField("txtAge",  30, 4, 10, 2);
+		_scr2 = new CScreen(this);	
+		_scr2.PutBox("yellow",0,0,78, 5, "yellow");
+		_scr2.PutBox("blue",0,6,19, 7);
+		_scr2.PutBox("red",20,6,58, 7, "mit Text");
+		_scr2.PutLabel("white", 21, 8, "this is the other screen .");
+		_scr2.PutLabel("green", 0, 20, 
+                       "ESC-quit   |  [/green] F1-Personal [/def]"+
+                                "  |   [/white]F2-Screen2 [/def]");
+	    /* add two screens to screenBuffers */
+		_scrBuffers = [];
+		_scrBuffers += [_scr1];		
+		_scrBuffers += [_scr2];	
+		
+		/* output all screenbuffer one after the other */
+		_amntScreenBuffers = sizeof(_scrBuffers);
+		_curBufNo = 0; // selectin first buffer
+		_curBuf = _scrBuffers[_curBufNo];
+		_curBuf.dumpScreen2();
+		
+		/* key press events handling | starting MAIN application loop */	
+		_rememberCurBufNo = _curBufNo;
+		do {
+		
+			_pressedKey = keyb.kbhit(100);
+		   
+			switch (_pressedKey){
+				case KEY_F1 : {
+					_curBufNo = 0;
+					_curBuf = _scrBuffers[0];
+					_curBuf.setData("txtName", "dataVALUE", "Hans");
+				}break;
+				case KEY_F2 : {
+					_curBufNo = 1;
+				}break;
+				default: {
+					if (_curBufNo == 0){						
+						con.Locate(30,10);
+						con.Print(_pressedKey + "          ");
+						/* try to let CScreen handle the key ... */
+						_curBuf = _scrBuffers[_curBufNo];
+						_curBuf.handleKeyPress(_pressedKey);
+						}
+				
+				}
+				break;
+				
+			}
+			if (_rememberCurBufNo != _curBufNo){
+				 
+				con.cls();
+				_curBuf = _scrBuffers[_curBufNo];
+				_curBuf.dumpScreen2();	
+				_rememberCurBufNo = _curBufNo;
+		
+			}
+		
+		
+		
+		}while (_pressedKey != KEY_ESCAPE);
+		
+		/* screen is closed. Data are set/edited ... continue with some app related things */
+		con.cls();
+		_curBuf = _scrBuffers[0];
+		_name = _curBuf.getData("txtName", "dataVALUE");
+		con.PrintLn(" datavalue is " + _name);
+	    //End(0); 
+	}
+}

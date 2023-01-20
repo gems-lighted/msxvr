@@ -1,0 +1,34 @@
+class CTools{
+
+	properties:	
+		app = null;
+		con = null;
+		timer1 = null;
+		sleep_bell = null;  // semaphore for application;
+						    // on this is checked if timer fired
+		
+	function _operator_new(_app){	
+		app = _app;
+		con = app.GetDOS().GetConsole();	
+	}
+	
+	function TestF(){
+		return (sleep_bell == false);		
+	}
+	
+	function sleep(time_ms){
+		sleep_bell = false;
+		_time = time_ms;
+	    timer1 = Timer_New("tim1",this, "timer1Elapsed", _time, false);
+		Timer_Start(timer1);
+		app.GetEngine().SleepWhile(this, "TestF");
+		return true; // goes back to waiting function
+	}
+	function timer1Elapsed(data){
+		_timer = Timer_Get("tim1");
+		Timer_Stop(_timer);
+		Timer_Delete(_timer);
+		sleep_bell = true;
+		return;
+	}
+}
